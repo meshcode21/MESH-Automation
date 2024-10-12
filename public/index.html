@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <title>HTML Data Extractor with Processing Progress</title>
+  <style>
+    #progress-bar {
+      width: 100%;
+      background-color: white;
+      margin: 10px 0;
+    }
+    #progress {
+      width: 0;
+      height: 30px;
+      background-color: #4caf50;
+      text-align: center;
+      line-height: 30px;
+      color: white;
+    }
+    .callout{
+      border: 1px solid rgb(146, 146, 146);
+      border-left: 5px solid rgb(0, 91, 196);
+      border-radius: 5px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    a{
+      background-color: #4caf50;
+      display: block;
+      padding: 10px;
+      margin: 20px 0;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bolder;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+    <div class="container shadow-sm p-3 mb-5 bg-body-tertiary rounded" style="margin-top: 20px;">
+
+      <h1>Lets Automate Your Work</h1>
+  
+      <div class="callout">
+        This software is specially designed for <span class="fw-semibold">Sajal Digital Studio</span> to manage conformations record of EDV program. This scan all the HTML files and then convert into excel file. The EXCEL file will automatically downloaded after few seconds.
+      </div>
+      
+  
+      <form id="upload-form" enctype="multipart/form-data">
+
+        <div class="mb-3">
+          <label for="formFileMultiple" class="form-label">Select all HTML files from where you want to extract data</label>
+          <input class="form-control" type="file" name="htmlFiles" id="formFileMultiple" multiple accept=".html">
+        </div>      
+
+        <button type="submit" id="btn" class="btn btn-primary px-5">START</button>
+      </form>
+
+      <div id="progress-bar">
+          <div id="progress">0%</div>
+        </div>
+        <p id="status"></p>
+      </div>
+
+    </div>
+
+  <script>
+    const form = document.getElementById('upload-form');
+    const progressBar = document.getElementById('progress');
+    const statusText = document.getElementById('status');
+    const btn = document.getElementById("btn");
+
+    btn.disabled = true;
+    
+    document.getElementById('formFileMultiple').addEventListener('change',(e)=>{
+      if(e.target.value != ''){
+        btn.disabled = false;
+      }
+    })
+
+    form.addEventListener('submit',async (e) => {
+      e.preventDefault();
+      // console.log("persormed");
+      const formData = new FormData(form);
+      const xhr = new XMLHttpRequest();
+
+      xhr.open('POST', '/upload', true);
+
+      xhr.onload = function () {
+        console.log('onload');
+        if (xhr.status === 200) {
+          statusText.textContent = 'Processing files...';
+          trackProcessingProgress();
+        } else {
+          statusText.textContent = 'Error during file upload';
+        }
+      };
+      xhr.onprogress = ()=>{
+        console.log("onprogress");
+      }
+
+      xhr.upload.onprogress = function(){
+        console.log("upload");
+      }
+
+      xhr.send(formData);
+    });
+
+    function trackProcessingProgress() {
+      const eventSource = new EventSource('/progress');
+
+      eventSource.onmessage = (event) => {
+        const progress = JSON.parse(event.data).progress;
+        
+        progressBar.style.width = progress + '%';
+        progressBar.textContent = progress + '%';
+
+        if (progress === 100) {
+          statusText.textContent = 'Processing complete! Click below to download Excel file...';
+          eventSource.close();
+
+          // Automatically trigger download
+          const link = document.createElement('a');
+          link.href = '/download';
+          link.textContent = "DOWNLOAD"
+          link.download = 'extracted_data.xlsx';
+          document.querySelector('.container').append(link);
+        }
+      };
+    }
+  </script>
+</body>
+</html>
