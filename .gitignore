@@ -1,3 +1,5 @@
 node_modules/
 *.xlsx
 uploads/
+abc.html
+forTesting.js
