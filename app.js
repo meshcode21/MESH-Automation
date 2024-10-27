@@ -31,13 +31,14 @@ app.post('/upload', upload.array('htmlFiles', 10000), (req, res) => {
     const htmlContent = fs.readFileSync(filePath, 'utf-8');
     const $ = cheerio.load(htmlContent);
 
-    // Example of extracting name and contact number
-    const name = $('span#name').text().trim();
-    const contact = $('span#contact').text().trim();
+    // Find the elements by class name and extract the values
+    const elements = $('.col-xs-12.col-sm-9.fnt3');
+    const name = $(elements[0]).text().trim();         // Entrant Name
+    const confirmationNumber = $(elements[1]).text().trim(); // Confirmation Number
+    const DOB = $(elements[2]).text().trim();          // Year of Birth
 
-    extractedData.push({ name, contact });
-
-      processedFiles++;
+    extractedData.push({ name, confirmationNumber, DOB });
+    processedFiles++;
 
     if (processedFiles === totalFiles) {
       // Convert extracted data to Excel when all files are processed
@@ -52,6 +53,7 @@ app.post('/upload', upload.array('htmlFiles', 10000), (req, res) => {
 
   res.status(200).send('Files uploaded and processing started');
 });
+
 
 // Progress tracking route using Server-Sent Events (SSE)
 app.get('/progress', (req, res) => {
